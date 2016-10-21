@@ -5,8 +5,22 @@ import (
 	"time"
 )
 
-// Limiter holds time bucket
-// event counts and rate tresholds.
+// TokenBucket uses a buffered channel as
+// a bucket, where the depth equals the channel
+// buffer size.
+type TokenBucket struct {
+	tokens chan int
+	refill *time.Ticker
+}
+
+// TokenBucketConfig holds TokenBucket parameters.
+type TokenBucketConfig struct {
+	RefillRate int
+	Capacity int
+}
+
+// Limiter uses a soft/hard threshold
+// with a static (TODO exponential) timeout.
 type Limiter struct {
 	sync.Mutex
 	counts    map[int64]int64
@@ -14,15 +28,43 @@ type Limiter struct {
 	softLimit int64
 }
 
-// Config parameters.
-type Config struct {
+// LimiterConfig holds Limiter parameters.
+type LimiterConfig struct {
 	HardLimit int64
 	SoftLimit int64
 	GcInt     int
 }
 
+// NewTokenBucket takes a *TokenBucketConfig
+// and returns a *TokenBucket.
+func NewTokenBucket(config *TokenBucketConfig) *TokenBucket {
+	tokenBucket := &TokenBucket{
+		tokens: make(chan int, config.Capacity),
+		refill: time.NewTicker(time.Second*time.Duration(config.RefillRate)),
+	}
+
+	go bucketRefiller(tokenBucket)
+
+	return tokenBucket
+}
+
+// bucketRefiller empties a TokenBucket.tokens
+// channel at the TokenBucketConfig.RefillRate.
+func bucketRefiller(tokenBucket *TokenBucket) {
+	for _ = range tokenBucket.refill.C {
+		<- tokenBucket.tokens
+	}
+}
+
+// GetToken simulates a token request by
+// attempting a send on a buffered channel,
+// which will block when full.
+func (tokenBucket *TokenBucket) GetToken() {
+	tokenBucket.tokens <- 0
+}
+
 // NewLimiter takes a *Config and returns a *Limiter.
-func NewLimiter(config *Config) *Limiter {
+func NewLimiter(config *LimiterConfig) *Limiter {
 	limiter := &Limiter{
 		counts:    make(map[int64]int64),
 		hardLimit: config.HardLimit,

@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	rl := limiter.NewLimiter(&limiter.Config{
+	rl := limiter.NewLimiter(&limiter.LimiterConfig{
 		HardLimit: 3,
 		SoftLimit: 3,
 		GcInt:     5})

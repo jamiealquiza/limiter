@@ -48,7 +48,7 @@ func connectionHandler(c net.Conn, rl *limiter.Limiter) {
 	switch s := rl.Incr(); {
 	case s == 2:
 		d := 250 * time.Millisecond
-		log.Printf("Hard limit lit from %s, sleeping client for %s\n",
+		log.Printf("Hard limit hit from %s, sleeping client for %s\n",
 			c.RemoteAddr().String(), d)
 		time.Sleep(d)
 	}

@@ -16,7 +16,7 @@ type TokenBucket struct {
 // TokenBucketConfig holds TokenBucket parameters.
 type TokenBucketConfig struct {
 	RefillRate int
-	Capacity int
+	Capacity   int
 }
 
 // Limiter uses a soft/hard threshold
@@ -40,7 +40,7 @@ type LimiterConfig struct {
 func NewTokenBucket(config *TokenBucketConfig) *TokenBucket {
 	tokenBucket := &TokenBucket{
 		tokens: make(chan int, config.Capacity),
-		refill: time.NewTicker(time.Second*time.Duration(config.RefillRate)),
+		refill: time.NewTicker(time.Second * time.Duration(config.RefillRate)),
 	}
 
 	go bucketRefiller(tokenBucket)
@@ -52,7 +52,7 @@ func NewTokenBucket(config *TokenBucketConfig) *TokenBucket {
 // channel at the TokenBucketConfig.RefillRate.
 func bucketRefiller(tokenBucket *TokenBucket) {
 	for _ = range tokenBucket.refill.C {
-		<- tokenBucket.tokens
+		<-tokenBucket.tokens
 	}
 }
 

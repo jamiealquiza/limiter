@@ -10,6 +10,45 @@ import (
 )
 
 func main() {
+	tb := limiter.NewTokenBucket(&limiter.TokenBucketConfig{
+		RefillRate: 1,
+		Capacity:   5})
+
+	server, err := net.Listen("tcp", "localhost:8080")
+	if err != nil {
+		log.Fatalf("Listener error: %s\n", err)
+	}
+	defer server.Close()
+
+	for {
+		conn, err := server.Accept()
+		if err != nil {
+			log.Printf("Connection handler error: %s\n", err)
+			time.Sleep(1 * time.Second)
+			continue
+		}
+		go connectionHandler(conn, tb)
+	}
+}
+
+func connectionHandler(c net.Conn, tb *limiter.TokenBucket) {
+	defer c.Close()
+
+	b := make([]byte, 1)
+
+	for {
+		_, err := io.ReadFull(c, b)
+		if err != nil {
+			break
+		}
+
+	}
+
+	tb.GetToken()
+}
+
+/*
+func main() {
 	rl := limiter.NewLimiter(&limiter.LimiterConfig{
 		HardLimit: 3,
 		SoftLimit: 3,
@@ -53,3 +92,4 @@ func connectionHandler(c net.Conn, rl *limiter.Limiter) {
 		time.Sleep(d)
 	}
 }
+*/
